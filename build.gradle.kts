@@ -9,9 +9,10 @@ plugins {
 }
 
 group = "com.project"
-version = "1.0.2"
+version = "1.0.3"
 
 val appName = "purple-email-client"
+val releaseJarsDir = layout.buildDirectory.dir("release-jars")
 
 fun currentOsClassifier(): String {
     val os = System.getProperty("os.name").lowercase().let {
@@ -76,16 +77,16 @@ compose.desktop {
  * instead of renaming every platform artifact to the same generic JAR name.
  *
  * Usage: ./gradlew packageCurrentOsFatJar
- * Run:   java -jar build/libs/purple-email-client-<os>-<arch>-1.0.2.jar
+ * Run:   java -jar build/release-jars/purple-email-client-<os>-<arch>-1.0.3.jar
  */
 tasks.register<Copy>("packageCurrentOsFatJar") {
     dependsOn("packageUberJarForCurrentOS")
     from(layout.buildDirectory.dir("compose/jars")) {
         include("*.jar")
     }
-    into(layout.buildDirectory.dir("libs"))
+    into(releaseJarsDir)
     doLast {
-        println("OS-specific fat JAR copied to ${layout.buildDirectory.get().asFile}/libs")
+        println("OS-specific fat JAR copied to ${releaseJarsDir.get().asFile}")
     }
 }
 
@@ -95,7 +96,7 @@ tasks.register<Copy>("packageCurrentOsFatJar") {
  */
 tasks.register<Copy>("packageFatJar") {
     dependsOn("packageCurrentOsFatJar")
-    from(layout.buildDirectory.dir("libs")) {
+    from(releaseJarsDir) {
         include("$appName-*-${project.version}.jar")
         rename { "$appName.jar" }
     }
@@ -125,11 +126,11 @@ val createLauncherScripts = tasks.register("createLauncherScripts") {
     dependsOn("packageCurrentOsFatJar")
     outputs.dir(launcherScriptsDir)
     doLast {
-        val jarName = layout.buildDirectory.dir("libs").get().asFile
+        val jarName = releaseJarsDir.get().asFile
             .listFiles { file -> file.name.matches(Regex("$appName-.*-${project.version}\\.jar")) }
             ?.firstOrNull()
             ?.name
-            ?: error("Could not find OS-specific JAR in build/libs")
+            ?: error("Could not find OS-specific JAR in ${releaseJarsDir.get().asFile}")
 
         val dir = launcherScriptsDir.get().asFile
         dir.mkdirs()
@@ -163,7 +164,7 @@ tasks.register<Zip>("packageCurrentOsJarBundle") {
     archiveFileName.set("$appName-${currentOsClassifier()}-${project.version}-jar-bundle.zip")
     destinationDirectory.set(layout.buildDirectory.dir("distributions"))
 
-    from(layout.buildDirectory.dir("libs")) {
+    from(releaseJarsDir) {
         include("$appName-*-${project.version}.jar")
         into(appName)
     }

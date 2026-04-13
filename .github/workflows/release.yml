@@ -69,7 +69,7 @@ jobs:
         with:
           name: purple-email-client-${{ matrix.name }}
           path: |
-            build/libs/purple-email-client-*-*-*.jar
+            build/release-jars/purple-email-client-*-*-*.jar
             build/distributions/purple-email-client-*-jar-bundle.zip
             build/distributions/purple-email-client-*-portable.zip
           if-no-files-found: error
