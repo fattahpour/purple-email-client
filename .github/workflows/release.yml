@@ -16,12 +16,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up JDK 21
+      - name: Set up JDK 17
         id: setup-java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '21'
+          java-version: '17'
 
       # gradle.properties may contain a developer-local org.gradle.java.home path.
       # Remove it so CI uses the JDK installed above.
