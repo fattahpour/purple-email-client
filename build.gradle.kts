@@ -1,4 +1,5 @@
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
+import org.gradle.api.tasks.bundling.Zip
 
 plugins {
     kotlin("jvm") version "2.1.0"
@@ -8,7 +9,28 @@ plugins {
 }
 
 group = "com.project"
-version = "1.0.1"
+version = "1.0.2"
+
+val appName = "purple-email-client"
+
+fun currentOsClassifier(): String {
+    val os = System.getProperty("os.name").lowercase().let {
+        when {
+            it.contains("win") -> "windows"
+            it.contains("mac") -> "macos"
+            it.contains("linux") -> "linux"
+            else -> it.replace(Regex("[^a-z0-9]+"), "-").trim('-')
+        }
+    }
+    val arch = System.getProperty("os.arch").lowercase().let {
+        when (it) {
+            "x86_64", "amd64" -> "x64"
+            "aarch64", "arm64" -> "arm64"
+            else -> it.replace(Regex("[^a-z0-9]+"), "-").trim('-')
+        }
+    }
+    return "$os-$arch"
+}
 
 repositories {
     mavenCentral()
@@ -40,29 +62,113 @@ compose.desktop {
 
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
-            packageName = "purple-email-client"
-            packageVersion = "1.0.1"
+            packageName = appName
+            packageVersion = project.version.toString()
         }
     }
 }
 
 /**
- * Convenience task: builds a self-contained fat JAR that bundles all runtime
- * dependencies (including Skiko native libs for the current OS) and copies it
- * to build/libs/purple-email-client.jar.
+ * Builds a self-contained fat JAR for the current OS.
  *
- * Usage: ./gradlew packageFatJar
- * Run:   java -jar build/libs/purple-email-client.jar
+ * Compose Desktop fat JARs contain native Skiko libraries, so they are
+ * OS-specific. Release builds must publish the classifier in the file name
+ * instead of renaming every platform artifact to the same generic JAR name.
+ *
+ * Usage: ./gradlew packageCurrentOsFatJar
+ * Run:   java -jar build/libs/purple-email-client-<os>-<arch>-1.0.2.jar
  */
-tasks.register<Copy>("packageFatJar") {
+tasks.register<Copy>("packageCurrentOsFatJar") {
     dependsOn("packageUberJarForCurrentOS")
     from(layout.buildDirectory.dir("compose/jars")) {
         include("*.jar")
-        rename { "purple-email-client.jar" }
     }
     into(layout.buildDirectory.dir("libs"))
     doLast {
-        println("Fat JAR → ${layout.buildDirectory.get().asFile}/libs/purple-email-client.jar")
+        println("OS-specific fat JAR copied to ${layout.buildDirectory.get().asFile}/libs")
+    }
+}
+
+/**
+ * Backwards-compatible local convenience task. Prefer packageCurrentOsFatJar
+ * for release artifacts so the OS/architecture classifier stays visible.
+ */
+tasks.register<Copy>("packageFatJar") {
+    dependsOn("packageCurrentOsFatJar")
+    from(layout.buildDirectory.dir("libs")) {
+        include("$appName-*-${project.version}.jar")
+        rename { "$appName.jar" }
+    }
+    into(layout.buildDirectory.dir("libs"))
+    doLast {
+        println("Convenience fat JAR -> ${layout.buildDirectory.get().asFile}/libs/$appName.jar")
+    }
+}
+
+/**
+ * Builds a portable application directory with a bundled Java runtime and zips
+ * it for distribution. This is the safest artifact for computers that do not
+ * already have a compatible Java installation.
+ */
+tasks.register<Zip>("packagePortableDistribution") {
+    dependsOn("createDistributable")
+    archiveFileName.set("$appName-${currentOsClassifier()}-${project.version}-portable.zip")
+    destinationDirectory.set(layout.buildDirectory.dir("distributions"))
+    from(layout.buildDirectory.dir("compose/binaries/main/app/$appName")) {
+        into(appName)
+    }
+}
+
+val launcherScriptsDir = layout.buildDirectory.dir("generated/launcher-scripts")
+
+val createLauncherScripts = tasks.register("createLauncherScripts") {
+    dependsOn("packageCurrentOsFatJar")
+    outputs.dir(launcherScriptsDir)
+    doLast {
+        val jarName = layout.buildDirectory.dir("libs").get().asFile
+            .listFiles { file -> file.name.matches(Regex("$appName-.*-${project.version}\\.jar")) }
+            ?.firstOrNull()
+            ?.name
+            ?: error("Could not find OS-specific JAR in build/libs")
+
+        val dir = launcherScriptsDir.get().asFile
+        dir.mkdirs()
+        dir.resolve("run-windows.bat").writeText(
+            """
+            @echo off
+            setlocal
+            cd /d "%~dp0"
+            java -jar "$jarName"
+            pause
+            
+            """.trimIndent()
+        )
+        dir.resolve("run-linux-macos.sh").writeText(
+            """
+            #!/usr/bin/env sh
+            cd "$(dirname "$0")" || exit 1
+            exec java -jar "$jarName"
+            
+            """.trimIndent()
+        )
+    }
+}
+
+/**
+ * Packages the current OS fat JAR with simple launch scripts. On Windows this
+ * produces a ZIP containing the Windows fat JAR and run-windows.bat.
+ */
+tasks.register<Zip>("packageCurrentOsJarBundle") {
+    dependsOn("packageCurrentOsFatJar", createLauncherScripts)
+    archiveFileName.set("$appName-${currentOsClassifier()}-${project.version}-jar-bundle.zip")
+    destinationDirectory.set(layout.buildDirectory.dir("distributions"))
+
+    from(layout.buildDirectory.dir("libs")) {
+        include("$appName-*-${project.version}.jar")
+        into(appName)
+    }
+    from(launcherScriptsDir) {
+        into(appName)
     }
 }
 

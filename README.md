@@ -24,14 +24,14 @@ A lightweight desktop email client built with Kotlin, Jetpack Compose for Deskto
 | UI framework  | Jetpack Compose for Desktop 1.7     |
 | Mail protocol | JavaMail (javax.mail 1.6.2)         |
 | Build         | Gradle 8+ (Kotlin DSL)              |
-| JVM target    | Java 17 (runs on JDK 21+)           |
+| JVM target    | Java 17                             |
 | Tests         | JUnit 5                             |
 
 ---
 
 ## Requirements
 
-- **JDK 21 or later** — [Download Temurin](https://adoptium.net/)
+- **JDK 17 or later** — [Download Temurin](https://adoptium.net/)
 - **Git**
 
 No separate Maven or Gradle installation is needed — the project includes the Gradle wrapper (`gradlew`).
@@ -73,27 +73,72 @@ Test reports are written to `build/reports/tests/test/index.html`.
 
 ---
 
-## Fat JAR
+## Runnable Builds
 
-Build a single self-contained JAR that bundles all runtime dependencies including native Skiko libs for the current OS:
+### OS-specific fat JAR
+
+Build a self-contained JAR that bundles all runtime dependencies including native Skiko libs for the current OS:
 
 ```bash
-./gradlew packageFatJar
+./gradlew packageCurrentOsFatJar
 ```
 
-The JAR is written to:
+The JAR is written to `build/libs/` with an OS and CPU classifier, for example:
 
 ```
-build/libs/purple-email-client.jar
+build/libs/purple-email-client-linux-x64-1.0.2.jar
 ```
 
 Run it with:
 
 ```bash
+java -jar build/libs/purple-email-client-linux-x64-1.0.2.jar
+```
+
+> **Note:** The fat JAR is OS-specific. A JAR built on Linux will not run on Windows because Compose Desktop bundles native Skiko libraries for the build OS.
+
+For local compatibility with older instructions, this task still creates a generic copy:
+
+```bash
+./gradlew packageFatJar
 java -jar build/libs/purple-email-client.jar
 ```
 
-> **Note:** The fat JAR is OS-specific (it bundles native Skiko libs for the OS it was built on). Build on the target OS.
+Do not use the generic file name for release assets because it hides the target OS.
+
+### JAR bundle
+
+Build a ZIP that contains the OS-specific fat JAR plus launcher scripts:
+
+```bash
+./gradlew packageCurrentOsJarBundle
+```
+
+The ZIP is written to:
+
+```
+build/distributions/purple-email-client-<os>-<arch>-1.0.2-jar-bundle.zip
+```
+
+On Windows, unzip it and run `run-windows.bat`. This bundle still requires Java 17 or later to be installed on the computer.
+
+### Portable app ZIP
+
+Build a portable application bundle with a Java runtime included:
+
+```bash
+./gradlew packagePortableDistribution
+```
+
+The ZIP is written to:
+
+```
+build/distributions/purple-email-client-<os>-<arch>-1.0.2-portable.zip
+```
+
+Use this artifact for users who do not already have Java installed.
+
+This task requires a full JDK that includes `jlink`; a JRE-only installation is not enough.
 
 ---
 
@@ -141,8 +186,10 @@ git push origin v1.0.0
 
 The workflow will:
 1. Run all tests
-2. Build the fat JAR
-3. Create a GitHub Release with the JAR attached as a downloadable asset
+2. Build OS-specific fat JARs on Linux, Windows, and macOS
+3. Build JAR bundles with launcher scripts on Linux, Windows, and macOS
+4. Build portable app ZIPs with a bundled Java runtime on Linux, Windows, and macOS
+5. Create a GitHub Release with all runnable artifacts attached as downloadable assets
 
 ### Manual trigger
 
@@ -154,11 +201,11 @@ The workflow can also be triggered manually from the **Actions** tab in GitHub w
 
 ```
 purple-email-client/
-├── build.gradle.kts                  # Gradle build config, fat JAR task
+├── build.gradle.kts                  # Gradle build config, runnable artifact tasks
 ├── settings.gradle.kts               # Root project name
 ├── gradle.properties                 # Local JVM override (stripped in CI)
 ├── gradlew / gradlew.bat             # Gradle wrapper
-├── .github/workflows/release.yml     # CI: test → fat JAR → GitHub Release
+├── .github/workflows/release.yml     # CI: test → OS builds → GitHub Release
 └── src/
     ├── main/
     │   ├── java/com/project/emailclient/
