@@ -8,7 +8,7 @@ plugins {
 }
 
 group = "com.project"
-version = "0.0.1-SNAPSHOT"
+version = "1.0.1"
 
 repositories {
     mavenCentral()
@@ -41,7 +41,7 @@ compose.desktop {
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
             packageName = "purple-email-client"
-            packageVersion = "1.0.0"
+            packageVersion = "1.0.1"
         }
     }
 }
