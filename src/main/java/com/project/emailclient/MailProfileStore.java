@@ -100,9 +100,9 @@ public class MailProfileStore {
         final String id       = props.getProperty(prefix + "id", "").trim();
         final String name     = props.getProperty(prefix + "name", "").trim();
         final String username = props.getProperty(prefix + "username", "").trim();
-        final String protocol = props.getProperty(prefix + "incomingProtocol", "pop3s").trim();
+        final String protocol = props.getProperty(prefix + "incomingProtocol", "imaps").trim();
         final String inHost   = props.getProperty(prefix + "incomingHost", "").trim();
-        final int    inPort   = parseIntSafe(props.getProperty(prefix + "incomingPort", "995"), 995);
+        final int    inPort   = parseIntSafe(props.getProperty(prefix + "incomingPort", "993"), 993);
         final boolean inSsl   = Boolean.parseBoolean(props.getProperty(prefix + "incomingSsl", "true"));
         final String smtpHost = props.getProperty(prefix + "smtpHost", "").trim();
         final int    smtpPort = parseIntSafe(props.getProperty(prefix + "smtpPort", "587"), 587);

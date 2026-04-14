@@ -8,9 +8,9 @@ package com.project.emailclient;
  */
 public enum ProviderConfig {
 
-    GMAIL("gmail", "pop.gmail.com", "smtp.gmail.com", 995, 587, "pop3s"),
-    YAHOO("yahoo", "pop.mail.yahoo.com", "smtp.mail.yahoo.com", 995, 587, "pop3s"),
-    HOTMAIL("hotmail", "pop3.live.com", "smtp.live.com", 995, 587, "pop3s");
+    GMAIL("gmail", "imap.gmail.com", "smtp.gmail.com", 993, 587, "imaps"),
+    YAHOO("yahoo", "imap.mail.yahoo.com", "smtp.mail.yahoo.com", 993, 587, "imaps"),
+    HOTMAIL("hotmail", "outlook.office365.com", "smtp.office365.com", 993, 587, "imaps");
 
     private final String name;
     private final String incomingHost;

@@ -88,6 +88,22 @@ class MailServiceGreenMailTest {
     }
 
     @Test
+    void refreshInbox_imapReadsNewlyDeliveredMail() throws Exception {
+        greenMail = start(ServerSetup.PROTOCOL_IMAP);
+        createUser();
+
+        final MailProfile profile = profile("imap", imapPort(), false, 25, false);
+        assertTrue(service.connect(profile, PASSWORD).isEmpty());
+
+        deliverMessage("New IMAP Mail", "Arrived after connect");
+
+        final List<MessageSummary> summaries = service.refreshInbox();
+        assertEquals(1, summaries.size());
+        assertEquals("New IMAP Mail", summaries.get(0).subject);
+        assertEquals("Arrived after connect", service.getContent(summaries.get(0)).trim());
+    }
+
+    @Test
     void sendThenReceive_smtpAndImapWithoutSsl_roundTripsMessage() throws Exception {
         greenMail = start(ServerSetup.PROTOCOL_SMTP, ServerSetup.PROTOCOL_IMAP);
         createUser();

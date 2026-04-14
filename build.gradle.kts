@@ -9,7 +9,7 @@ plugins {
 }
 
 group = "com.project"
-version = "1.1.0"
+version = "1.1.1"
 
 val appName = "purple-email-client"
 val releaseJarsDir = layout.buildDirectory.dir("release-jars")

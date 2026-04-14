@@ -23,10 +23,11 @@ class ProviderConfigTest {
         final ProviderConfig p = ProviderConfig.forSmtpHost("smtp.gmail.com");
         assertNotNull(p, "Gmail provider should be found");
         assertEquals("gmail", p.getName());
-        assertEquals("pop.gmail.com", p.getIncomingHost());
+        assertEquals("imap.gmail.com", p.getIncomingHost());
         assertEquals("smtp.gmail.com", p.getSmtpHost());
-        assertEquals(995, p.getIncomingPort());
+        assertEquals(993, p.getIncomingPort());
         assertEquals(587, p.getSmtpPort());
+        assertEquals("imaps", p.getStoreProtocol());
     }
 
     @Test
@@ -34,15 +35,15 @@ class ProviderConfigTest {
         final ProviderConfig p = ProviderConfig.forSmtpHost("smtp.mail.yahoo.com");
         assertNotNull(p);
         assertEquals("yahoo", p.getName());
-        assertEquals("pop.mail.yahoo.com", p.getIncomingHost());
+        assertEquals("imap.mail.yahoo.com", p.getIncomingHost());
     }
 
     @Test
     void lookupBySmtpHost_hotmail() {
-        final ProviderConfig p = ProviderConfig.forSmtpHost("smtp.live.com");
+        final ProviderConfig p = ProviderConfig.forSmtpHost("smtp.office365.com");
         assertNotNull(p);
         assertEquals("hotmail", p.getName());
-        assertEquals("pop3.live.com", p.getIncomingHost());
+        assertEquals("outlook.office365.com", p.getIncomingHost());
     }
 
     @Test

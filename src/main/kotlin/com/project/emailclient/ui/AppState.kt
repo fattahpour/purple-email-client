@@ -7,6 +7,8 @@ import com.project.emailclient.MailService
 import com.project.emailclient.MessageSummary
 import kotlinx.coroutines.*
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 // ── Compose request model ─────────────────────────────────────────────────────
 
@@ -39,6 +41,8 @@ class AppState(
 
     /** Coroutine scope for background operations. */
     val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
+    private val mailOperationMutex = Mutex()
 
     // ── connection ───────────────────────────────────────────────────────────
 
@@ -84,7 +88,11 @@ class AppState(
                 statusMessage = "Connecting to ${profile.profileName}…"
             }
             try {
-                val msgs = mailService.connect(profile, password)
+                val msgs = withContext(Dispatchers.IO) {
+                    mailOperationMutex.withLock {
+                        mailService.connect(profile, password)
+                    }
+                }
                 withContext(Dispatchers.Main) {
                     connectedProfile  = profile
                     sessionPassword   = password
@@ -112,7 +120,12 @@ class AppState(
         selectedContent = null
         scope.launch {
             try {
-                val content = mailService.getContent(messages[index])
+                val summary = messages[index]
+                val content = withContext(Dispatchers.IO) {
+                    mailOperationMutex.withLock {
+                        mailService.getContent(summary)
+                    }
+                }
                 withContext(Dispatchers.Main) {
                     if (selectedIndex == index) {
                         selectedContent = content.ifBlank { "(empty)" }
@@ -134,7 +147,11 @@ class AppState(
         scope.launch {
             withContext(Dispatchers.Main) { isLoading = true }
             try {
-                mailService.deleteMessage(msg)
+                withContext(Dispatchers.IO) {
+                    mailOperationMutex.withLock {
+                        mailService.deleteMessage(msg)
+                    }
+                }
                 withContext(Dispatchers.Main) {
                     val updated = messages.toMutableList()
                     updated.removeAt(idx)
@@ -182,7 +199,11 @@ class AppState(
         scope.launch {
             withContext(Dispatchers.Main) { isLoading = true }
             try {
-                mailService.sendMessage(profile, password, from, to, subject, body)
+                withContext(Dispatchers.IO) {
+                    mailOperationMutex.withLock {
+                        mailService.sendMessage(profile, password, from, to, subject, body)
+                    }
+                }
                 withContext(Dispatchers.Main) {
                     isLoading      = false
                     statusMessage  = "Message sent."
@@ -200,7 +221,71 @@ class AppState(
     /** Username of the currently connected profile, or empty string if not connected. */
     fun currentUsername(): String = connectedProfile?.username ?: ""
 
+    /**
+     * Manually checks the connected account for new mail using the existing
+     * incoming connection. For IMAP profiles this refreshes the IMAP INBOX.
+     */
+    fun checkMail() {
+        if (connectedProfile == null) {
+            statusMessage = "Connect first."
+            return
+        }
+        scope.launch {
+            refreshInbox(showLoading = true, manual = true)
+        }
+    }
+
     // ── auto-receive ─────────────────────────────────────────────────────────
+
+    private suspend fun refreshInbox(showLoading: Boolean, manual: Boolean) {
+        if (showLoading) {
+            withContext(Dispatchers.Main) {
+                isLoading = true
+                statusMessage = "Checking mail..."
+            }
+        }
+
+        try {
+            val refreshed = withContext(Dispatchers.IO) {
+                mailOperationMutex.withLock {
+                    mailService.refreshInbox()
+                }
+            }
+            consecutivePollErrors = 0
+            withContext(Dispatchers.Main) {
+                val oldCount = messages.size
+                messages = refreshed
+                if (selectedIndex != null && selectedIndex!! >= refreshed.size) {
+                    selectedIndex = null
+                    selectedContent = null
+                }
+                if (showLoading) {
+                    isLoading = false
+                }
+                statusMessage = when {
+                    refreshed.size > oldCount -> "Inbox updated - ${refreshed.size} message(s)"
+                    manual -> "Mail checked - ${refreshed.size} message(s)"
+                    else -> statusMessage
+                }
+            }
+        } catch (ce: CancellationException) {
+            throw ce
+        } catch (e: Exception) {
+            consecutivePollErrors++
+            withContext(Dispatchers.Main) {
+                if (showLoading) {
+                    isLoading = false
+                }
+                if (manual || consecutivePollErrors == 1 || consecutivePollErrors % 5 == 0) {
+                    statusMessage = if (manual) {
+                        "Check mail failed: ${e.message}"
+                    } else {
+                        "Auto-refresh error: ${e.message}"
+                    }
+                }
+            }
+        }
+    }
 
     /**
      * Starts a background polling loop that refreshes the inbox every
@@ -213,27 +298,7 @@ class AppState(
             while (isActive) {
                 delay(POLL_INTERVAL_MS)
                 if (connectedProfile == null) break
-                try {
-                    val refreshed = mailService.refreshInbox()
-                    consecutivePollErrors = 0
-                    withContext(Dispatchers.Main) {
-                        val oldCount = messages.size
-                        messages = refreshed
-                        if (refreshed.size > oldCount) {
-                            statusMessage = "Inbox updated — ${refreshed.size} message(s)"
-                        }
-                    }
-                } catch (ce: CancellationException) {
-                    throw ce
-                } catch (e: Exception) {
-                    consecutivePollErrors++
-                    // Only surface the error on first failure or every 5th, to avoid status spam.
-                    if (consecutivePollErrors == 1 || consecutivePollErrors % 5 == 0) {
-                        withContext(Dispatchers.Main) {
-                            statusMessage = "Auto-refresh error: ${e.message}"
-                        }
-                    }
-                }
+                refreshInbox(showLoading = false, manual = false)
             }
         }
     }

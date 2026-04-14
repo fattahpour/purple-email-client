@@ -13,7 +13,7 @@ import javax.swing.*;
  */
 public class ProfileDialog extends JDialog {
 
-    private static final String[] PROTOCOLS = {"pop3s", "pop3", "imaps", "imap"};
+    private static final String[] PROTOCOLS = {"imaps", "imap", "pop3s", "pop3"};
 
     private final JTextField        nameField         = new JTextField(25);
     private final JTextField        usernameField     = new JTextField(25);
@@ -52,7 +52,7 @@ public class ProfileDialog extends JDialog {
             smtpStartTlsCheck.setSelected(existing.isSmtpStartTls());
             trustInvalidSslCheck.setSelected(existing.isTrustInvalidSsl());
         } else {
-            inPortField.setText("995");
+            inPortField.setText("993");
             smtpPortField.setText("587");
         }
 

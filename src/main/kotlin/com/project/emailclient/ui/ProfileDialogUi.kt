@@ -11,7 +11,7 @@ import androidx.compose.ui.unit.dp
 import com.project.emailclient.MailProfile
 import com.project.emailclient.MailProfileStore
 
-private val PROTOCOLS = listOf("pop3s", "pop3", "imaps", "imap")
+private val PROTOCOLS = listOf("imaps", "imap", "pop3s", "pop3")
 
 /**
  * Profile add/edit dialog content.
@@ -27,9 +27,9 @@ fun ProfileEditorContent(
 ) {
     var profileName    by remember { mutableStateOf(existing?.profileName ?: "") }
     var username       by remember { mutableStateOf(existing?.username ?: "") }
-    var protocol       by remember { mutableStateOf(existing?.incomingProtocol ?: "pop3s") }
+    var protocol       by remember { mutableStateOf(existing?.incomingProtocol ?: "imaps") }
     var inHost         by remember { mutableStateOf(existing?.incomingHost ?: "") }
-    var inPort         by remember { mutableStateOf(existing?.incomingPort?.toString() ?: "995") }
+    var inPort         by remember { mutableStateOf(existing?.incomingPort?.toString() ?: "993") }
     var inSsl          by remember { mutableStateOf(existing?.isIncomingSsl ?: true) }
     var smtpHost       by remember { mutableStateOf(existing?.smtpHost ?: "") }
     var smtpPort       by remember { mutableStateOf(existing?.smtpPort?.toString() ?: "587") }

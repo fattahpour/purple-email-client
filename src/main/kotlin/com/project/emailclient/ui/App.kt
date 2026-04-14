@@ -83,6 +83,12 @@ private fun TopActionBar(state: AppState) {
         ) {
             Text("Compose Mail")
         }
+        Button(
+            onClick = { state.checkMail() },
+            enabled = state.connectedProfile != null && !state.isLoading
+        ) {
+            Text("Check Mail")
+        }
         Spacer(Modifier.weight(1f))
         state.connectedProfile?.let { profile ->
             Text(
