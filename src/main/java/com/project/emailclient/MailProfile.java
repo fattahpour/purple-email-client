@@ -21,6 +21,7 @@ public final class MailProfile {
     private final String smtpHost;
     private final int smtpPort;
     private final boolean smtpStartTls;
+    private final boolean trustInvalidSsl;
 
     /**
      * Creates a new profile. If {@code id} is null or blank a random UUID is assigned.
@@ -28,6 +29,16 @@ public final class MailProfile {
     public MailProfile(String id, String profileName, String username,
                        String incomingProtocol, String incomingHost, int incomingPort, boolean incomingSsl,
                        String smtpHost, int smtpPort, boolean smtpStartTls) {
+        this(id, profileName, username, incomingProtocol, incomingHost, incomingPort, incomingSsl,
+                smtpHost, smtpPort, smtpStartTls, false);
+    }
+
+    /**
+     * Creates a new profile. If {@code id} is null or blank a random UUID is assigned.
+     */
+    public MailProfile(String id, String profileName, String username,
+                       String incomingProtocol, String incomingHost, int incomingPort, boolean incomingSsl,
+                       String smtpHost, int smtpPort, boolean smtpStartTls, boolean trustInvalidSsl) {
         this.id               = (id != null && !id.isBlank()) ? id : UUID.randomUUID().toString();
         this.profileName      = profileName;
         this.username         = username;
@@ -38,6 +49,7 @@ public final class MailProfile {
         this.smtpHost         = smtpHost;
         this.smtpPort         = smtpPort;
         this.smtpStartTls     = smtpStartTls;
+        this.trustInvalidSsl  = trustInvalidSsl;
     }
 
     /**
@@ -74,6 +86,7 @@ public final class MailProfile {
     public String  getSmtpHost()         { return smtpHost; }
     public int     getSmtpPort()         { return smtpPort; }
     public boolean isSmtpStartTls()      { return smtpStartTls; }
+    public boolean isTrustInvalidSsl()   { return trustInvalidSsl; }
 
     /** Returns the profile name, used by JComboBox for display. */
     @Override

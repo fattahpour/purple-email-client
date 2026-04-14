@@ -46,6 +46,10 @@ public class MailService {
         props.put("mail." + prefix + ".port", String.valueOf(profile.getIncomingPort()));
         if (profile.isIncomingSsl()) {
             props.put("mail." + prefix + ".ssl.enable", "true");
+            if (profile.isTrustInvalidSsl()) {
+                // Opt-in for self-signed or otherwise invalid certificates.
+                props.put("mail." + prefix + ".ssl.trust", "*");
+            }
         }
 
         final Session session = Session.getInstance(props);
@@ -164,6 +168,10 @@ public class MailService {
         props.put("mail.smtp.auth", "true");
         if (profile.isSmtpStartTls()) {
             props.put("mail.smtp.starttls.enable", "true");
+            if (profile.isTrustInvalidSsl()) {
+                // Opt-in for self-signed or otherwise invalid certificates.
+                props.put("mail.smtp.ssl.trust", "*");
+            }
         }
 
         final String smtpUser = profile.getUsername();
@@ -217,11 +225,13 @@ public class MailService {
     // ── helpers ──────────────────────────────────────────────────────────────
 
     /**
-     * JavaMail property prefix: both {@code pop3} and {@code pop3s} use {@code pop3.*};
-     * both {@code imap} and {@code imaps} use {@code imap.*}.
+     * JavaMail property prefix. SSL protocols have their own property namespace
+     * (for example {@code mail.imaps.*}), so keep the exact protocol family.
      */
     private static String propPrefix(String protocol) {
+        if (protocol != null && protocol.startsWith("imaps")) return "imaps";
         if (protocol != null && protocol.startsWith("imap")) return "imap";
+        if (protocol != null && protocol.startsWith("pop3s")) return "pop3s";
         return "pop3";
     }
 

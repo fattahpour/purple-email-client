@@ -86,13 +86,13 @@ Build a self-contained JAR that bundles all runtime dependencies including nativ
 The release JAR is written to `build/release-jars/` with an OS and CPU classifier, for example:
 
 ```
-build/release-jars/purple-email-client-linux-x64-1.0.3.jar
+build/release-jars/purple-email-client-linux-x64-1.1.0.jar
 ```
 
 Run it with:
 
 ```bash
-java -jar build/release-jars/purple-email-client-linux-x64-1.0.3.jar
+java -jar build/release-jars/purple-email-client-linux-x64-1.1.0.jar
 ```
 
 > **Note:** The fat JAR is OS-specific. A JAR built on Linux will not run on Windows because Compose Desktop bundles native Skiko libraries for the build OS.
@@ -117,7 +117,7 @@ Build a ZIP that contains the OS-specific fat JAR plus launcher scripts:
 The ZIP is written to:
 
 ```
-build/distributions/purple-email-client-<os>-<arch>-1.0.3-jar-bundle.zip
+build/distributions/purple-email-client-<os>-<arch>-1.1.0-jar-bundle.zip
 ```
 
 On Windows, unzip it and run `run-windows.bat`. This bundle still requires Java 17 or later to be installed on the computer.
@@ -133,7 +133,7 @@ Build a portable application bundle with a Java runtime included:
 The ZIP is written to:
 
 ```
-build/distributions/purple-email-client-<os>-<arch>-1.0.3-portable.zip
+build/distributions/purple-email-client-<os>-<arch>-1.1.0-portable.zip
 ```
 
 Use this artifact for users who do not already have Java installed.

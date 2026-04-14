@@ -9,7 +9,7 @@ plugins {
 }
 
 group = "com.project"
-version = "1.0.3"
+version = "1.1.0"
 
 val appName = "purple-email-client"
 val releaseJarsDir = layout.buildDirectory.dir("release-jars")
@@ -53,6 +53,7 @@ dependencies {
 
     // Tests — JUnit 5
     testImplementation("org.junit.jupiter:junit-jupiter:5.10.2")
+    testImplementation("com.icegreen:greenmail:1.6.15")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.1")
 }
@@ -77,7 +78,7 @@ compose.desktop {
  * instead of renaming every platform artifact to the same generic JAR name.
  *
  * Usage: ./gradlew packageCurrentOsFatJar
- * Run:   java -jar build/release-jars/purple-email-client-<os>-<arch>-1.0.3.jar
+ * Run:   java -jar build/release-jars/purple-email-client-<os>-<arch>-1.1.0.jar
  */
 tasks.register<Copy>("packageCurrentOsFatJar") {
     dependsOn("packageUberJarForCurrentOS")

@@ -130,6 +130,16 @@ class MailProfileTest {
         assertEquals("smtp.example.com", p.getSmtpHost());
         assertEquals(465,                p.getSmtpPort());
         assertFalse(p.isSmtpStartTls());
+        assertFalse(p.isTrustInvalidSsl());
+    }
+
+    @Test
+    void trustInvalidSsl_canBeEnabled() {
+        final MailProfile p = new MailProfile("id1", "Home", "me@example.com",
+                "imaps", "imap.example.com", 993, true,
+                "smtp.example.com", 587, true, true);
+
+        assertTrue(p.isTrustInvalidSsl());
     }
 
     // ── helpers ──────────────────────────────────────────────────────────────

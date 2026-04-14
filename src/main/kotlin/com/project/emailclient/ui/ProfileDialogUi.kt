@@ -34,6 +34,7 @@ fun ProfileEditorContent(
     var smtpHost       by remember { mutableStateOf(existing?.smtpHost ?: "") }
     var smtpPort       by remember { mutableStateOf(existing?.smtpPort?.toString() ?: "587") }
     var smtpStartTls   by remember { mutableStateOf(existing?.isSmtpStartTls ?: true) }
+    var trustInvalidSsl by remember { mutableStateOf(existing?.isTrustInvalidSsl ?: false) }
     var errorMessage   by remember { mutableStateOf<String?>(null) }
 
     fun autoFillPort() = when (protocol) {
@@ -111,6 +112,11 @@ fun ProfileEditorContent(
                 label = { Text("SMTP Port *") }, modifier = Modifier.fillMaxWidth()
             )
             LabeledCheckbox(checked = smtpStartTls, onCheckedChange = { smtpStartTls = it }, label = "Use STARTTLS")
+            LabeledCheckbox(
+                checked = trustInvalidSsl,
+                onCheckedChange = { trustInvalidSsl = it },
+                label = "Trust invalid SSL certificates"
+            )
 
             errorMessage?.let { msg ->
                 Text(msg, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
@@ -133,7 +139,7 @@ fun ProfileEditorContent(
                         existing?.id,
                         profileName.trim(), username.trim(),
                         protocol, inHost.trim(), inPortInt, inSsl,
-                        smtpHost.trim(), smtpPortInt, smtpStartTls
+                        smtpHost.trim(), smtpPortInt, smtpStartTls, trustInvalidSsl
                     )
                     val errors = candidate.validate()
                     if (errors.isNotEmpty()) { errorMessage = errors.joinToString("\n"); return@Button }

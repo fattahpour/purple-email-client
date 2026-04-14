@@ -198,6 +198,10 @@ class EmailClient extends JFrame {
         props.put("mail.smtp.auth", "true");
         if (currentProfile.isSmtpStartTls()) {
             props.put("mail.smtp.starttls.enable", "true");
+            if (currentProfile.isTrustInvalidSsl()) {
+                // Opt-in for self-signed or otherwise invalid certificates.
+                props.put("mail.smtp.ssl.trust", "*");
+            }
         }
 
         final String smtpUser = currentProfile.getUsername();
@@ -290,6 +294,10 @@ class EmailClient extends JFrame {
                 props.put("mail." + prefix + ".port", String.valueOf(profile.getIncomingPort()));
                 if (profile.isIncomingSsl()) {
                     props.put("mail." + prefix + ".ssl.enable", "true");
+                    if (profile.isTrustInvalidSsl()) {
+                        // Opt-in for self-signed or otherwise invalid certificates.
+                        props.put("mail." + prefix + ".ssl.trust", "*");
+                    }
                 }
 
                 final Session emailSession = Session.getInstance(props);
@@ -324,11 +332,13 @@ class EmailClient extends JFrame {
 
     /**
      * Returns the JavaMail property prefix for an incoming-mail protocol.
-     * JavaMail uses "pop3" as the base for both pop3 and pop3s, and "imap" for both imap and imaps.
+     * SSL protocols have their own property namespace.
      */
     private static String incomingPropPrefix(String protocol) {
         if (protocol == null) return "pop3";
+        if (protocol.startsWith("imaps")) return "imaps";
         if (protocol.startsWith("imap")) return "imap";
+        if (protocol.startsWith("pop3s")) return "pop3s";
         return "pop3";
     }
 

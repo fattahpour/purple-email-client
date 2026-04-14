@@ -24,6 +24,8 @@ public class ProfileDialog extends JDialog {
     private final JTextField        smtpHostField     = new JTextField(25);
     private final JTextField        smtpPortField     = new JTextField(6);
     private final JCheckBox         smtpStartTlsCheck = new JCheckBox("Use STARTTLS", true);
+    private final JCheckBox         trustInvalidSslCheck =
+            new JCheckBox("Trust invalid SSL certificates", false);
 
     private final String existingId;
     private MailProfile result;
@@ -48,6 +50,7 @@ public class ProfileDialog extends JDialog {
             smtpHostField.setText(existing.getSmtpHost());
             smtpPortField.setText(String.valueOf(existing.getSmtpPort()));
             smtpStartTlsCheck.setSelected(existing.isSmtpStartTls());
+            trustInvalidSslCheck.setSelected(existing.isTrustInvalidSsl());
         } else {
             inPortField.setText("995");
             smtpPortField.setText("587");
@@ -90,7 +93,8 @@ public class ProfileDialog extends JDialog {
         addSeparatorRow(form, row++, "Outgoing Mail (SMTP)");
         addFormRow(form, row++, "SMTP Host:",        smtpHostField);
         addFormRow(form, row++, "SMTP Port:",        smtpPortField);
-        addCheckRow(form, row, smtpStartTlsCheck);
+        addCheckRow(form, row++, smtpStartTlsCheck);
+        addCheckRow(form, row, trustInvalidSslCheck);
 
         // Bottom buttons
         final JPanel buttons = new JPanel();
@@ -169,7 +173,8 @@ public class ProfileDialog extends JDialog {
                 inSslCheck.isSelected(),
                 smtpHostField.getText().trim(),
                 smtpPort,
-                smtpStartTlsCheck.isSelected()
+                smtpStartTlsCheck.isSelected(),
+                trustInvalidSslCheck.isSelected()
         );
 
         final List<String> errors = candidate.validate();

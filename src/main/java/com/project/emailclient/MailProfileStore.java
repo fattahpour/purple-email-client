@@ -33,6 +33,7 @@ import java.util.logging.Logger;
  *   profile.N.smtpHost=...
  *   profile.N.smtpPort=...
  *   profile.N.smtpStartTls=true|false
+ *   profile.N.trustInvalidSsl=true|false
  * </pre>
  */
 public class MailProfileStore {
@@ -106,13 +107,15 @@ public class MailProfileStore {
         final String smtpHost = props.getProperty(prefix + "smtpHost", "").trim();
         final int    smtpPort = parseIntSafe(props.getProperty(prefix + "smtpPort", "587"), 587);
         final boolean startTls = Boolean.parseBoolean(props.getProperty(prefix + "smtpStartTls", "true"));
+        final boolean trustInvalidSsl =
+                Boolean.parseBoolean(props.getProperty(prefix + "trustInvalidSsl", "false"));
 
         if (id.isBlank() || name.isBlank()) {
             return null;
         }
 
         final MailProfile p = new MailProfile(id, name, username, protocol,
-                inHost, inPort, inSsl, smtpHost, smtpPort, startTls);
+                inHost, inPort, inSsl, smtpHost, smtpPort, startTls, trustInvalidSsl);
 
         final List<String> errors = p.validate();
         if (!errors.isEmpty()) {
@@ -164,6 +167,7 @@ public class MailProfileStore {
         props.setProperty(prefix + "smtpHost",         p.getSmtpHost());
         props.setProperty(prefix + "smtpPort",         String.valueOf(p.getSmtpPort()));
         props.setProperty(prefix + "smtpStartTls",     String.valueOf(p.isSmtpStartTls()));
+        props.setProperty(prefix + "trustInvalidSsl",  String.valueOf(p.isTrustInvalidSsl()));
     }
 
     // ── CRUD ─────────────────────────────────────────────────────────────────

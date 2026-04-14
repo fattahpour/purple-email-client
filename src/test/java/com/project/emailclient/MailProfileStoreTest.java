@@ -54,6 +54,21 @@ class MailProfileStoreTest {
         assertEquals("smtp.gmail.com", p.getSmtpHost());
         assertEquals(587,              p.getSmtpPort());
         assertTrue(p.isSmtpStartTls());
+        assertFalse(p.isTrustInvalidSsl());
+    }
+
+    @Test
+    void saveAndLoad_trustInvalidSsl_roundTrips() {
+        store.load();
+        store.addProfile(new MailProfile("id1", "Local Test", "user@example.test",
+                "imaps", "localhost", 993, true,
+                "localhost", 587, true, true));
+
+        final MailProfileStore reloaded = new MailProfileStore(configFile);
+        reloaded.load();
+
+        assertEquals(1, reloaded.getProfiles().size());
+        assertTrue(reloaded.getProfiles().get(0).isTrustInvalidSsl());
     }
 
     // ── round-trip: multiple profiles ────────────────────────────────────────
